@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.*;
+import java.nio.charset.Charset;
 import java.util.*;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -26,7 +27,7 @@ public class Main {
 	private final String XML_DESTINATION = "C:\\Users\\Kevin\\Desktop\\Translations\\";
 	
 	//do we only want to translate a single word/sentence
-	private final String SENTENCE = "Test sentence";
+	private final String SENTENCE = "Chess is a board game for 2 players, it's played on a square board containing 64 squares (8 rows by 8 columns) Each player has a turn to move 1 piece before the other player has a chance to make a move The goal is to capture your opponent's king (checkmate) which means your opponent has no moves to prevent the king from capture.";
 	
 	public final static void main(String[] args) {
 		
@@ -94,21 +95,23 @@ public class Main {
 		//loop through each language
 		for (Language language : Language.values()) {
 			try {
-				
+
 				//translate an xml file
 				System.out.println("Translating: " + language.toString() + " - " + language.getCode() + ", " + new Date());
 				createXML(language);
 				System.out.println("");
+				break;
 				
-				/*
 				//translate a single word
+				/*
 				System.out.println(language.toString() + " - " + language.getCode());				
 				byte[] byteText = getTranslationText(language, SENTENCE).getBytes(Charset.forName("UTF-8"));
-				System.out.println("<string name=\"exit_prompt\">" + new String(byteText) + "</string>");
+				System.out.println(new String(byteText));
 				*/
+				//System.out.println("<string name=\"exit_prompt\">" + new String(byteText) + "</string>");
 				
-				/*
 				//for new apk updates
+				/*
 				System.out.println("<" + language.getCode().toLowerCase() + "-" + language.getCode().toUpperCase() + ">");
 				byte[] byteText = getTranslationText(language, SENTENCE).getBytes(Charset.forName("UTF-8"));
 				System.out.println(new String(byteText));
@@ -150,7 +153,7 @@ public class Main {
 				
 				if (nNode.getNodeType() == Node.ELEMENT_NODE) {
 	
-					Element element = (Element) nNode;
+					Element element = (Element)nNode;
 					
 					String word = null;
 					String attribute = null;
@@ -172,6 +175,50 @@ public class Main {
 					}
 				}
 			}
+			
+			nList = doc.getElementsByTagName("array");
+			
+			for (int temp = 0; temp < nList.getLength(); temp++) {
+				
+				Node nNode = nList.item(temp);
+				
+				if (nNode.getNodeType() == Node.ELEMENT_NODE) {
+					
+					Element element = (Element)nNode;
+					
+					String word = null;
+					String attribute = null;
+					
+					word = element.getTextContent();
+					attribute = element.getAttribute("name");
+					
+					if (word != null && attribute != null) {
+						
+						xml += "<array name=\"" + element.getAttribute("name") + "\">\r\n";
+						
+						NodeList nListItems = element.getElementsByTagName("item");
+					
+						for (int i = 0; i < nListItems.getLength(); i++) {
+							
+							Node currentNode = nListItems.item(i);
+							
+							if (currentNode.getNodeType() == Node.ELEMENT_NODE) {
+								
+								Element tmpElement = (Element)currentNode;
+								
+								word = tmpElement.getTextContent();
+								
+								if (word != null && word.trim().length() > 0) {
+									xml += "<item>" + getTranslationText(language, word) + "</item>\r\n"; 
+								}
+							}
+						}
+						
+						xml += "</array>\r\n";
+					}
+				}
+			}
+			
 			
 			String fileDest = XML_DESTINATION + "values-" + language.getCode() + "\\strings.xml";
 			
